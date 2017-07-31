@@ -38,13 +38,16 @@ public class Main extends TelegramLongPollingBot {
     }
 
     public static void main(String[] args) {
-        ApiContextInitializer.init();
-        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-        try {
-            telegramBotsApi.registerBot(new Main());
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
+//        ApiContextInitializer.init();
+//        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
+//        try {
+//            telegramBotsApi.registerBot(new Main());
+//        } catch (TelegramApiException e) {
+//            e.printStackTrace();
+//        }
+        Sender sender = new Sender();
+        sender.sendEMail("Hello","tema","ratmir-91@mail.ru");
+        System.out.println("Done");
     }
 
     private void sendMsg(Message message, String text) {
