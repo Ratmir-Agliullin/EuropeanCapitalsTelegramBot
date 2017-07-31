@@ -8,6 +8,7 @@ import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +17,38 @@ public class Main extends TelegramLongPollingBot {
         long chat_id = update.getMessage().getChatId();
         Message message = update.getMessage();
    String answer ="Я не знаю что ответить на это";
-        if (message.getText().equals("/markup"))  KeyBoard(chat_id); else {
+
+   if (message.getText().equals("put address")) {
+       try {
+           Serialize(message.getText().toString());
+       } catch (IOException e) {
+           e.printStackTrace();
+       }
+       sendMsg(message,"put text");} else
+   if (message.getText().equals("put text")) {
+       try {
+           Serialize(message.getText().toString());
+       } catch (IOException e) {
+           e.printStackTrace();
+       }
+       sendMsg(message,"put subject");} else
+   if (message.getText().equals("put subject")) {
+       try {
+           Serialize(message.getText().toString());
+       } catch (IOException e) {
+           e.printStackTrace();
+       }
+       sendMsg(message,"send mail");}else
+        if (message.getText().equals("/markup"))  KeyBoard(chat_id); else
+        if (message.getText().equals("Send email")) { //SendEmail(buffer.getText(),buffer.getSubject(),buffer.getAddress());
+            try {
+                SendEmail(Deserialize()[0],Deserialize()[1],Deserialize()[2]);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+        } else {
             if (message == null) sendMsg(message, "Напиши страну Европы и я назову ее столицу");
             if (message != null) {
                 if (message.getText().equals("Франция"))
@@ -38,16 +70,14 @@ public class Main extends TelegramLongPollingBot {
     }
 
     public static void main(String[] args) {
-//        ApiContextInitializer.init();
-//        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
-//        try {
-//            telegramBotsApi.registerBot(new Main());
-//        } catch (TelegramApiException e) {
-//            e.printStackTrace();
-//        }
-        Sender sender = new Sender();
-        sender.sendEMail("Hello","tema","ratmir-91@mail.ru");
-        System.out.println("Done");
+        ApiContextInitializer.init();
+        TelegramBotsApi telegramBotsApi = new TelegramBotsApi();
+        try {
+            telegramBotsApi.registerBot(new Main());
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void sendMsg(Message message, String text) {
@@ -63,11 +93,36 @@ public class Main extends TelegramLongPollingBot {
         }
 
     }
+
+    public void Serialize(String text) throws IOException {
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\buffer.dat"));
+        out.writeObject(text);
+        out.close();
+    }
+
+    public String[] Deserialize() throws IOException, ClassNotFoundException {
+        ObjectInputStream in =  new ObjectInputStream (new FileInputStream("C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\buffer.dat"));
+        String [] result=null;
+        result[0] = in.readObject().toString();
+        result[1] = in.readObject().toString();
+        result[2] = in.readObject().toString();
+        return result;
+    }
+
+    public void SendEmail(String text, String subj,String address){
+
+        Sender sender = new Sender();
+            sender.sendEMail(text,subj,address);
+
+
+    }
+
+
     private void KeyBoard(long chat_id){
 
         SendMessage message = new SendMessage() // Create a message object object
                 .setChatId(chat_id)
-                .setText("Here is your keyboard");
+                .setText("There is your keyboard");
         // Create ReplyKeyboardMarkup object
         ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
         // Create the keyboard (list of keyboard rows)
@@ -75,15 +130,15 @@ public class Main extends TelegramLongPollingBot {
         // Create a keyboard row
         KeyboardRow row = new KeyboardRow();
         // Set each button, you can also use KeyboardButton objects if you need something else than text
-        row.add("Row 1 Button 1");
-        row.add("Row 1 Button 2");
-        row.add("Row 1 Button 3");
+        row.add("Send email");
+        row.add("put address");
+        row.add("put text");
         // Add the first row to the keyboard
         keyboard.add(row);
         // Create another keyboard row
         row = new KeyboardRow();
         // Set each button for the second line
-        row.add("Row 2 Button 1");
+        row.add("put subject");
         row.add("Row 2 Button 2");
         row.add("Row 2 Button 3");
         // Add the second row to the keyboard
