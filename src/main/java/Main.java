@@ -3,7 +3,9 @@ import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
+import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
@@ -13,53 +15,40 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main extends TelegramLongPollingBot {
+    private final String addressFileName = "C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\buffer.dat";
+    private final String textFileName = "C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\text.dat";
+    private final String subjectFileName = "C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\subject.dat";
     public void onUpdateReceived(Update update) {
         long chat_id = update.getMessage().getChatId();
         Message message = update.getMessage();
-   String answer ="Я не знаю что ответить на это";
+   String answer =null;
 
-   if (message.getText().equals("put address")) {
-       try {
-           Serialize(message.getText().toString());
-       } catch (IOException e) {
-           e.printStackTrace();
-       }
-       sendMsg(message,"put text");} else
-   if (message.getText().equals("put text")) {
-       try {
-           Serialize(message.getText().toString());
-       } catch (IOException e) {
-           e.printStackTrace();
-       }
-       sendMsg(message,"put subject");} else
-   if (message.getText().equals("put subject")) {
-       try {
-           Serialize(message.getText().toString());
-       } catch (IOException e) {
-           e.printStackTrace();
-       }
-       sendMsg(message,"send mail");}else
-        if (message.getText().equals("/markup"))  KeyBoard(chat_id); else
-        if (message.getText().equals("Send email")) { //SendEmail(buffer.getText(),buffer.getSubject(),buffer.getAddress());
-            try {
-                SendEmail(Deserialize()[0],Deserialize()[1],Deserialize()[2]);
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-        } else {
-            if (message == null) sendMsg(message, "Напиши страну Европы и я назову ее столицу");
-            if (message != null) {
-                if (message.getText().equals("Франция"))
-                    answer = "Париж";
-                if (message.getText().equals("Германия") || message.getText().equals("ФРГ"))
-                    answer = "Берлин";
+
+                if (message == null) sendMsg(message, "Напиши страну Европы и я назову ее столицу"); else
+                if (message != null) {
+                    if (message.getText().equals("Франция")) {
+                        answer = "Париж";
+                        sendMsg(message, answer);
+                    } else if (message.getText().equals("Германия") || message.getText().equals("ФРГ")) {
+                        answer = "Берлин";
+                        sendMsg(message, answer);
+                      }  if(message.getText().equals("Inline")) {InlineKeyBoard(chat_id,update);}
+                    else  if (update.getCallbackQuery().getData().equals("update")){
+            sendMsg(message,"update");
+                } else
+                        {
+                        String mas =message.getText();
+                        String address =mas.split(" ")[0];
+                        String text = mas.split(" ")[1];
+                        String subject = mas.split(" ")[2];
+                  sendMsg(message, address);
+                  SendEmail(text,subject,address);
+                    }
+                }
+
             }
 
-            sendMsg(message, answer);
-        }
-            }
+
 
     public String getBotUsername() {
         return "EuropeanCapitalsBot";
@@ -94,18 +83,16 @@ public class Main extends TelegramLongPollingBot {
 
     }
 
-    public void Serialize(String text) throws IOException {
-        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream("C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\buffer.dat"));
+    public void Serialize(String filePath, String text) throws IOException {
+        ObjectOutputStream out = new ObjectOutputStream(new FileOutputStream(filePath));
         out.writeObject(text);
         out.close();
     }
 
-    public String[] Deserialize() throws IOException, ClassNotFoundException {
-        ObjectInputStream in =  new ObjectInputStream (new FileInputStream("C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\buffer.dat"));
-        String [] result=null;
-        result[0] = in.readObject().toString();
-        result[1] = in.readObject().toString();
-        result[2] = in.readObject().toString();
+    public String Deserialize(String filePath) throws IOException, ClassNotFoundException {
+        ObjectInputStream in =  new ObjectInputStream (new FileInputStream(filePath));
+        String  result= in.readObject().toString();
+        System.out.println(result);
         return result;
     }
 
@@ -153,4 +140,27 @@ public class Main extends TelegramLongPollingBot {
             e.printStackTrace();
         }
     }
+
+    private void InlineKeyBoard(long chat_id, Update update){
+        SendMessage message = new SendMessage() // Create a message object object
+                .setChatId(chat_id)
+                .setText("You send /start");
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+        rowInline.add(new InlineKeyboardButton().setText("Update").setCallbackData("update"));
+        // Set the keyboard to the markup
+        rowsInline.add(rowInline);
+        markupInline.setKeyboard(rowsInline);
+        message.setReplyMarkup(markupInline);
+        try {
+            sendMessage(message); // Sending our message object to user
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+//        if (update.getCallbackQuery().getData().equals("update")){
+//            sendMsg(update.getMessage(),"update");
+//        }
+    }
 }
+
