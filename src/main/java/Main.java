@@ -1,6 +1,7 @@
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.TelegramBotsApi;
 import org.telegram.telegrambots.api.methods.send.SendMessage;
+import org.telegram.telegrambots.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.api.objects.Message;
 import org.telegram.telegrambots.api.objects.Update;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -14,39 +15,79 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Math.toIntExact;
+
 public class Main extends TelegramLongPollingBot {
     private final String addressFileName = "C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\buffer.dat";
     private final String textFileName = "C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\text.dat";
     private final String subjectFileName = "C:\\Users\\agliullin\\Desktop\\idea projects\\EuropeanCapitalsTelegramBot\\src\\main\\resources\\subject.dat";
     public void onUpdateReceived(Update update) {
-        long chat_id = update.getMessage().getChatId();
+        long chat_id;
+
         Message message = update.getMessage();
    String answer =null;
 
 
-                if (message == null) sendMsg(message, "Напиши страну Европы и я назову ее столицу"); else
-                if (message != null) {
+                if ((message == null) && !(update.hasCallbackQuery())) sendMsg(message, "Напиши страну Европы и я назову ее столицу"); else
+                if (message != null) {chat_id = update.getMessage().getChatId();
                     if (message.getText().equals("Франция")) {
                         answer = "Париж";
                         sendMsg(message, answer);
                     } else if (message.getText().equals("Германия") || message.getText().equals("ФРГ")) {
                         answer = "Берлин";
                         sendMsg(message, answer);
-                      }  if(message.getText().equals("Inline")) {InlineKeyBoard(chat_id,update);}
-                    else  if (update.getCallbackQuery().getData().equals("update")){
-            sendMsg(message,"update");
-                } else
-                        {
-                        String mas =message.getText();
-                        String address =mas.split(" ")[0];
-                        String text = mas.split(" ")[1];
-                        String subject = mas.split(" ")[2];
-                  sendMsg(message, address);
-                  SendEmail(text,subject,address);
+                      }  if(message.getText().equals("Inline")) {
+                        long chat_id3 = update.getMessage().getChatId();
+                        SendMessage message2 = new SendMessage() // Create a message object object
+                                .setChatId(chat_id3)
+                                .setText("You send /start");
+                        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+                        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+                        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                        rowInline.add(new InlineKeyboardButton().setText("Update").setCallbackData("update"));
+                        // Set the keyboard to the markup
+                        rowsInline.add(rowInline);
+                        markupInline.setKeyboard(rowsInline);
+                        message2.setReplyMarkup(markupInline);
+                        try {
+                            sendMessage(message2); // Sending our message object to user
+                        } catch (TelegramApiException e) {
+                            e.printStackTrace();
+                        }
+
                     }
+                     }
+
+                else if  (update.hasCallbackQuery()) {
+                        // Set variables
+                        String call_data = update.getCallbackQuery().getData();
+                        long message_id = update.getCallbackQuery().getMessage().getMessageId();
+                        long chat_id2 = update.getCallbackQuery().getMessage().getChatId();
+
+                        if (call_data.equals("update")) {
+                            String answer2 = "Updated message text";
+                            EditMessageText new_message = new EditMessageText()
+                                    .setChatId(chat_id2)
+                                    .setMessageId(toIntExact(message_id))
+                                    .setText(answer2);
+                            try {
+                                editMessageText(new_message);
+                            } catch (TelegramApiException e) {
+                                e.printStackTrace();
+                            }
+
+                            String mas = message.getText();
+                            String address = mas.split(" ")[0];
+                            String text = mas.split(" ")[1];
+                            String subject = mas.split(" ")[2];
+                            sendMsg(message, address);
+                            SendEmail(text, subject, address);
+                        }
+                    }
+
                 }
 
-            }
+
 
 
 
@@ -141,7 +182,11 @@ public class Main extends TelegramLongPollingBot {
         }
     }
 
-    private void InlineKeyBoard(long chat_id, Update update){
+
+
+
+    private void InlineKeyBoard( Update update){
+        long chat_id = update.getCallbackQuery().getMessage().getChatId();
         SendMessage message = new SendMessage() // Create a message object object
                 .setChatId(chat_id)
                 .setText("You send /start");
@@ -158,9 +203,7 @@ public class Main extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
-//        if (update.getCallbackQuery().getData().equals("update")){
-//            sendMsg(update.getMessage(),"update");
-//        }
+
     }
 }
 
